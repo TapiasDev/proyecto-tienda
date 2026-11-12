@@ -1,0 +1,162 @@
+@page "/maestrodetalle"
+@inject IRepositorio Repositorio
+
+<PageTitle>Maestro-Detalle</PageTitle>
+
+<h3>Maestro-Detalle: Clientes → Créditos → Pagos</h3>
+<p class="text-muted">Seleccione un cliente para ver sus créditos, y un crédito para ver sus pagos.</p>
+
+@if (clientes == null)
+{
+    <p>Iniciando carga de clientes...</p>
+}
+else
+{
+    <div class="row">
+        @* MAESTRO: clientes *@
+        <div class="col-lg-4 mb-3">
+            <div class="card">
+                <div class="card-header fw-bold">Clientes</div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var c in clientes)
+                    {
+                        <li class="list-group-item list-group-item-action @(clienteActual?.Codigo == c.Codigo ? "active" : "")"
+                            style="cursor:pointer" @onclick="() => SeleccionarCliente(c)">
+                            <b>@c.Codigo</b> - @c.Nombre
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            @if (clienteActual != null)
+            {
+                @* DETALLE: créditos del cliente seleccionado *@
+                <div class="card mb-3">
+                    <div class="card-header fw-bold">Créditos de @clienteActual.Nombre</div>
+                    <div class="card-body p-0">
+                        @if (creditos == null)
+                        {
+                            <p class="p-3 mb-0">Cargando créditos...</p>
+                        }
+                        else if (!creditos.Any())
+                        {
+                            <p class="p-3 mb-0">Este cliente no tiene créditos.</p>
+                        }
+                        else
+                        {
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Monto inicial</th>
+                                        <th>Saldo actual</th>
+                                        <th>Estado</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var cr in creditos)
+                                    {
+                                        <tr class="@(creditoActual?.Id == cr.Id ? "table-primary" : "")"
+                                            style="cursor:pointer" @onclick="() => SeleccionarCredito(cr)">
+                                            <td>@cr.Id</td>
+                                            <td>$ @cr.MontoInicial.ToString("N0")</td>
+                                            <td>$ @cr.SaldoActual.ToString("N0")</td>
+                                            <td><span class="badge @ColorEstado(cr.Estado)">@cr.Estado</span></td>
+                                            <td>@cr.FechaOtorgamiento.ToString("dd/MM/yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (creditoActual != null)
+            {
+                @* DETALLE DEL DETALLE: pagos del crédito seleccionado *@
+                <div class="card">
+                    <div class="card-header fw-bold">Pagos del crédito @creditoActual.Id</div>
+                    <div class="card-body p-0">
+                        @if (pagos == null)
+                        {
+                            <p class="p-3 mb-0">Cargando pagos...</p>
+                        }
+                        else if (!pagos.Any())
+                        {
+                            <p class="p-3 mb-0">Este crédito no tiene pagos registrados.</p>
+                        }
+                        else
+                        {
+                            <table class="table table-striped mb-0">
+                                <thead class="table-secondary">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Valor cuota</th>
+                                        <th>Fecha</th>
+                                        <th>Observación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var p in pagos)
+                                    {
+                                        <tr>
+                                            <td>@p.Id</td>
+                                            <td>$ @p.ValorCuota.ToString("N0")</td>
+                                            <td>@p.FechaPago?.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>@p.Observacion</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr class="fw-bold">
+                                        <td>Total</td>
+                                        <td>$ @pagos.Sum(p => p.ValorCuota).ToString("N0")</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<Cliente>? clientes;
+    private List<Credito>? creditos;
+    private List<Pago>? pagos;
+    private Cliente? clienteActual;
+    private Credito? creditoActual;
+
+    protected async override Task OnInitializedAsync()
+    {
+        clientes = await Repositorio.GetAsync<List<Cliente>>("api/Clientes");
+    }
+
+    private async Task SeleccionarCliente(Cliente cliente)
+    {
+        clienteActual = cliente;
+        creditoActual = null;
+        pagos = null;
+        creditos = null;
+        creditos = await Repositorio.GetAsync<List<Credito>>("api/Creditos/cliente/" + cliente.Codigo);
+    }
+
+    private async Task SeleccionarCredito(Credito credito)
+    {
+        creditoActual = credito;
+        pagos = null;
+        pagos = await Repositorio.GetAsync<List<Pago>>("api/Pagos/credito/" + credito.Id);
+    }
+
+    private string ColorEstado(string estado)
+    {
+        return estado == "Activo" ? "bg-warning text-dark" : estado == "Cumplido" ? "bg-success" : "bg-secondary";
+    }
+}

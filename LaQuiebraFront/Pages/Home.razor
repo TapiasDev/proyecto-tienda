@@ -1,0 +1,38 @@
+﻿@page "/"
+@inject Sesion Sesion
+
+<PageTitle>La Quiebra LTDA</PageTitle>
+
+<h1>Bienvenido, @Sesion.Usuario</h1>
+
+<p>Sistema de cartera morosa de <b>La Quiebra LTDA</b>. Ingresó con el rol <b>@Sesion.Rol</b>.</p>
+
+<div class="row mt-4">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Consulta</h5>
+                <p class="card-text">Buscar acreedores por código o por nombre.</p>
+                <a href="consulta" class="btn btn-primary">Ir a Consulta</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Maestro-Detalle</h5>
+                <p class="card-text">Clientes, sus créditos y los pagos de cada crédito.</p>
+                <a href="maestrodetalle" class="btn btn-primary">Ir a Maestro-Detalle</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">Vista Cartera</h5>
+                <p class="card-text">Estado de la cartera desde la vista Vw_EstadoCartera.</p>
+                <a href="vista" class="btn btn-primary">Ir a Vista</a>
+            </div>
+        </div>
+    </div>
+</div>

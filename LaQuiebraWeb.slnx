@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="LaQuiebraBack/LaQuiebraBack.csproj" />
+  <Project Path="LaQuiebraFront/LaQuiebraFront.csproj" />
+  <Project Path="LaQuiebraModelo/LaQuiebraModelo.csproj" />
+</Solution>

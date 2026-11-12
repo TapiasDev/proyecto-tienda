@@ -1,0 +1,130 @@
+@page "/consulta"
+@inject IRepositorio Repositorio
+
+<PageTitle>Consulta de acreedores</PageTitle>
+
+<h3>Consulta de acreedores</h3>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Buscar por:</label>
+                <select class="form-select" @bind="tipoBusqueda">
+                    <option value="codigo">Código</option>
+                    <option value="nombre">Nombre</option>
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Dato a buscar:</label>
+                <input class="form-control" @bind="criterio" @bind:event="oninput" @onkeyup="Enter" />
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-primary me-2" @onclick="Buscar">Buscar</button>
+                <button class="btn btn-secondary" @onclick="CargarTodos">Ver todos</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (mensaje != null)
+{
+    <div class="alert alert-warning">@mensaje</div>
+}
+
+@if (Lista == null)
+{
+    <p>Iniciando carga de clientes...</p>
+}
+else if (Lista.Any())
+{
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Correo</th>
+                <th>Dirección</th>
+                <th>Fecha registro</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cliente in Lista)
+            {
+                <tr>
+                    <td>@cliente.Codigo</td>
+                    <td>@cliente.Nombre</td>
+                    <td>@cliente.Telefono</td>
+                    <td>@cliente.Correo</td>
+                    <td>@cliente.Direccion</td>
+                    <td>@cliente.FechaRegistro?.ToString("dd/MM/yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    public List<Cliente>? Lista { get; set; }
+    private string tipoBusqueda = "codigo";
+    private string criterio = string.Empty;
+    private string? mensaje;
+
+    protected async override Task OnInitializedAsync()
+    {
+        await CargarTodos();
+    }
+
+    private async Task CargarTodos()
+    {
+        mensaje = null;
+        criterio = string.Empty;
+        Lista = await Repositorio.GetAsync<List<Cliente>>("api/Clientes");
+    }
+
+    private async Task Buscar()
+    {
+        mensaje = null;
+        if (string.IsNullOrWhiteSpace(criterio))
+        {
+            mensaje = "Debe ingresar el dato a buscar";
+            return;
+        }
+
+        if (tipoBusqueda == "codigo")
+        {
+            if (!int.TryParse(criterio, out int codigo))
+            {
+                mensaje = "El código debe ser numérico";
+                return;
+            }
+            try
+            {
+                var cliente = await Repositorio.GetByIdAsync<Cliente>("api/Clientes", codigo);
+                Lista = new List<Cliente> { cliente };
+            }
+            catch (HttpRequestException)
+            {
+                Lista = new List<Cliente>();
+            }
+        }
+        else
+        {
+            Lista = await Repositorio.GetAsync<List<Cliente>>("api/Clientes/nombre/" + Uri.EscapeDataString(criterio.Trim()));
+        }
+
+        if (!Lista.Any())
+        {
+            mensaje = "No se encontraron registros con ese dato";
+        }
+    }
+
+    private async Task Enter(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Buscar();
+        }
+    }
+}

@@ -1,0 +1,76 @@
+@page "/vista"
+@inject IRepositorio Repositorio
+
+<PageTitle>Estado de cartera</PageTitle>
+
+<h3>Estado de la cartera</h3>
+<p class="text-muted">Información de la vista <b>Vw_EstadoCartera</b> de la base de datos.</p>
+
+@if (Lista == null)
+{
+    <p>Iniciando carga de la vista...</p>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col-md-4 mb-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-muted">Total prestado</div>
+                    <h4>$ @Lista.Sum(x => x.MontoInicial).ToString("N0")</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-muted">Saldo por cobrar</div>
+                    <h4 class="text-danger">$ @Lista.Sum(x => x.SaldoActual).ToString("N0")</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-muted">Créditos activos</div>
+                    <h4>@Lista.Count(x => x.EstadoCredito == "Activo") de @Lista.Count</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Cód. cliente</th>
+                <th>Cliente</th>
+                <th>ID crédito</th>
+                <th>Monto inicial</th>
+                <th>Saldo actual</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var fila in Lista)
+            {
+                <tr>
+                    <td>@fila.CodigoCliente</td>
+                    <td>@fila.NombreCliente</td>
+                    <td>@fila.IdCredito</td>
+                    <td>$ @fila.MontoInicial.ToString("N0")</td>
+                    <td>$ @fila.SaldoActual.ToString("N0")</td>
+                    <td>@fila.EstadoCredito</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    public List<EstadoCartera>? Lista { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        Lista = await Repositorio.GetAsync<List<EstadoCartera>>("api/EstadoCartera");
+    }
+}

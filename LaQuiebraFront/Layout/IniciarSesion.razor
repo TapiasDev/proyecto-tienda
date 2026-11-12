@@ -1,0 +1,61 @@
+@using System.Text.Json
+@inject IRepositorio Repositorio
+@inject Sesion Sesion
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="text-center mb-1">La Quiebra LTDA</h3>
+                <p class="text-center text-muted mb-4">Cartera morosa - Inicio de sesión</p>
+
+                @if (mensaje != null)
+                {
+                    <div class="alert alert-danger py-2">@mensaje</div>
+                }
+
+                <EditForm Model="login" OnValidSubmit="Ingresar">
+                    <div class="mb-3">
+                        <label class="form-label">Usuario:</label>
+                        <InputText class="form-control" @bind-Value="login.Usuario" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contraseña:</label>
+                        <InputText type="password" class="form-control" @bind-Value="login.Contrasena" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" disabled="@cargando">
+                        @(cargando ? "Validando..." : "Ingresar")
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private Login login = new();
+    private string? mensaje;
+    private bool cargando = false;
+
+    private async Task Ingresar()
+    {
+        mensaje = null;
+        cargando = true;
+        try
+        {
+            //Control de acceso: el API valida el usuario y devuelve el rol
+            var json = (string)await Repositorio.PostAsync("api/Usuarios/login", login);
+            var respuesta = JsonSerializer.Deserialize<LoginRespuesta>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Sesion.Iniciar(respuesta!.Usuario, respuesta.Rol);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            mensaje = "Usuario o contraseña incorrectos";
+        }
+        catch (Exception)
+        {
+            mensaje = "No se pudo conectar con el API, verifique que LaQuiebraBack se esté ejecutando";
+        }
+        cargando = false;
+    }
+}

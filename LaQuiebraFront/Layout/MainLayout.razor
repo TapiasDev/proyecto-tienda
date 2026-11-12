@@ -1,0 +1,50 @@
+﻿@inherits LayoutComponentBase
+@implements IDisposable
+@inject Sesion Sesion
+@inject NavigationManager NavigationManager
+
+@if (!Sesion.Activa)
+{
+    @* Si no ha iniciado sesión solo se muestra el login *@
+    <article class="content px-4">
+        <IniciarSesion />
+    </article>
+}
+else
+{
+    <div class="page">
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+
+        <main>
+            <div class="top-row px-4">
+                <span class="me-3">Usuario: <b>@Sesion.Usuario</b></span>
+                <span class="badge bg-primary me-3">Rol: @Sesion.Rol</span>
+                <button class="btn btn-outline-secondary btn-sm" @onclick="CerrarSesion">Cerrar sesión</button>
+            </div>
+
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        Sesion.Cambio += StateHasChanged;
+    }
+
+    private void CerrarSesion()
+    {
+        Sesion.Cerrar();
+        NavigationManager.NavigateTo("");
+    }
+
+    public void Dispose()
+    {
+        Sesion.Cambio -= StateHasChanged;
+    }
+}
