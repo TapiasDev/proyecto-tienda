@@ -1,0 +1,1 @@
+Para que funcione la app de escritorio con conexión manual se deben usar los scripts de creación y de población
